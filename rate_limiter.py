@@ -1,40 +1,21 @@
+
 import time
-from collections import defaultdict, deque
-from threading import Lock
+from collections import deque
 
 class RateLimiter:
-    """
-    Implementación de Rate Limiting mediante Ventana Deslizante (Sliding Window).
-    Controla el número de solicitudes permitidas por cliente en un intervalo de tiempo.
-    """
-    def __init__(self, requests_limit: int, window_seconds: int):
-        self.requests_limit = requests_limit
+    def __init__(self, max_requests, window_seconds):
+        self.max_requests = max_requests
         self.window_seconds = window_seconds
-        # Diccionario donde la llave es el cliente (IP) y el valor es una cola de timestamps de sus peticiones
-        self.client_requests = defaultdict(deque)
-        self.lock = Lock() # Aseguramos que el acceso sea thread-safe
+        self.requests = {}
 
-    def is_allowed(self, client_id: str) -> bool:
-        with self.lock:
-            now = time.time()
-            requests = self.client_requests[client_id]
-            
-            # 1. Limpiar timestamps antiguos que ya están fuera de la ventana actual
-            while requests and requests[0] <= now - self.window_seconds:
-                requests.popleft()
-            
-            # 2. Verificar si el cliente ha superado el límite
-            if len(requests) < self.requests_limit:
-                requests.append(now)
-                return True
-            
-            return False
-
-    def get_remaining(self, client_id: str) -> int:
-        """Devuelve cuántas peticiones le quedan al cliente en la ventana actual."""
-        with self.lock:
-            now = time.time()
-            requests = self.client_requests[client_id]
-            while requests and requests[0] <= now - self.window_seconds:
-                requests.popleft()
-            return max(0, self.requests_limit - len(requests))
+    def allow_request(self, client_ip):
+        now = time.time()
+        if client_ip not in self.requests:
+            self.requests[client_ip] = deque()
+        window = self.requests[client_ip]
+        while window and window[0] <= now - self.window_seconds:
+            window.popleft()
+        if len(window) < self.max_requests:
+            window.append(now)
+            return True
+        return False

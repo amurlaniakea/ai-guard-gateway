@@ -1,10 +1,11 @@
 package httpapi.authz
 
-default allow = true
+default allow = false
 
-deny {
-    input.request.method == "POST"
-    input.request.path == "/v1/chat/completions"
-    input.request.body.prompt
-    contains(input.request.body.prompt, "malicious")
+allow { 
+    input.role == 'premium'
+}
+
+allow { 
+    not contains(input.prompt, "malicious")
 }

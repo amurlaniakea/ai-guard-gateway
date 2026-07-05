@@ -105,6 +105,7 @@ async def metrics():
     from monitor import generate_latest_metrics
     return Response(content=generate_latest_metrics(), media_type="text/plain")
 
+
 @app.post("/v1/chat/completions")
 async def proxy_chat(request: ChatRequest, req_raw: Request):
     # 1. Autenticación
@@ -115,7 +116,7 @@ async def proxy_chat(request: ChatRequest, req_raw: Request):
     if not user_info:
         return JSONResponse(status_code=401, content={"error": "Unauthorized"})
 
-    # 2. Gobernanza OPA (Sincronizada)
+    # 2. Gobernanza OPA (Sincronizada - FAIL CLOSED)
     try:
         async with httpx.AsyncClient(timeout=1.0) as client:
             opa_payload = {"input": {"user": user_info["user"], "role": user_info["role"], "action": "chat"}}
@@ -124,8 +125,12 @@ async def proxy_chat(request: ChatRequest, req_raw: Request):
                 allowed = opa_res.json().get("result", {}).get("allow", False)
                 if not allowed:
                     return JSONResponse(status_code=403, content={"error": "Policy Denied by OPA"})
+            else:
+                # Fail-Closed: Si OPA devuelve error HTTP, denegamos
+                return JSONResponse(status_code=403, content={"error": "Security Governance Error: OPA Server Error"})
     except httpx.HTTPError as e:
-        log_event("WARN", "opa_connection_failure", error=str(e))
+        log_event("CRITICAL", "opa_connection_failure", error=str(e))
+        return JSONResponse(status_code=403, content={"error": "Security Governance Error: OPA Unavailable"})
 
     # 3. Forwarding al Backend (Llamada Segura)
     try:
@@ -143,6 +148,5 @@ async def proxy_chat(request: ChatRequest, req_raw: Request):
     except httpx.HTTPError as e:
         log_event("ERROR", "backend_failure", error=str(e))
         return JSONResponse(status_code=502, content={"error": "Bad Gateway"})
-
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8080)
