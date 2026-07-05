@@ -61,10 +61,13 @@ def test_pii_redaction_real():
     assert "[PHONE_REDACTED]" in redacted
     assert "test@example.com" not in redacted
 
+
 class ResponseMock:
     def __init__(self, status_code, json_data=None, content=None):
         self.status_code = status_code
         self._json_data = json_data
         self.content = content or (json.dumps(json_data).encode() if json_data else b"")
+        self.headers = {"Content-Type": "application/json"}
     def json(self):
         return self._json_data
+
