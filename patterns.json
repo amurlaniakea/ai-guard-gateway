@@ -13,7 +13,8 @@
     "desactiva",
     "disable",
     "break",
-    "list"
+    "omitir",
+    "skip"
   ],
   "control_subjects": [
     "instrucciones",
@@ -32,11 +33,37 @@
     "pasos",
     "steps",
     "programacion",
-    "programming",
-    "clave",
+    "programming"
+  ],
+  "revelation_verbs": [
+    "muestra",
+    "show",
+    "revela",
+    "reveal",
+    "imprime",
+    "print",
+    "dime",
+    "tell",
+    "escribe",
+    "write",
+    "lista",
+    "list",
+    "dump",
+    "expone",
+    "expose"
+  ],
+  "info_targets": [
+    "prompt",
+    "instrucciones",
+    "instructions",
+    "configuracion",
+    "config",
+    "secrets",
     "password",
-    "secret",
-    "secreto"
+    "clave",
+    "internal",
+    "interno",
+    "secretos"
   ],
   "critical_triggers": [
     "dan",
@@ -54,6 +81,7 @@
     "modo dios",
     "god mode",
     "jailbreak",
-    "bypass safety"
+    "bypass safety",
+    "unfiltered"
   ]
 }
