@@ -93,6 +93,7 @@ class ChatRequest(BaseModel):
 from auth import validate_auth
 from rate_limiter import RateLimiter
 from pii_redactor import PIIRedactor
+from monitor import generate_latest_metrics, REQUESTS_TOTAL, REQUESTS_BLOCKED_TOTAL, REQUEST_DURATION, CONTENT_TYPE_LATEST
 
 limiter = RateLimiter(max_requests=5, window_seconds=60)
 redactor = PIIRedactor()
@@ -121,12 +122,14 @@ class DeepInspectionMiddleware(BaseHTTPMiddleware):
         return None
 
     async def dispatch(self, request: Request, call_next):
+        start_time = time.perf_counter()
         if request.url.path in ["/metrics", "/health"]:
             return await call_next(request)
         
         client_ip = request.client.host if request.client else "unknown"
         if not limiter.allow_request(client_ip):
             log_event("WARN", "rate_limit_exceeded", ip=client_ip)
+            REQUESTS_BLOCKED_TOTAL.labels(reason="rate_limit").inc()
             return JSONResponse(status_code=429, content={"error": "Too Many Requests"})
         
         injection_response = await self._analyze_body_for_injection(request)
@@ -167,7 +170,7 @@ async def health():
 
 @app.get("/metrics")
 async def metrics():
-    from monitor import generate_latest_metrics, REQUESTS_TOTAL, REQUESTS_BLOCKED_TOTAL, REQUEST_DURATION, CONTENT_TYPE_LATEST
+    
     return Response(content=generate_latest_metrics(), media_type=CONTENT_TYPE_LATEST)
 
 @app.post("/v1/chat/completions")
