@@ -101,3 +101,13 @@ class ResponseMock:
 
 
 
+
+
+def test_metrics_endpoint():
+    # Hacer una petición para generar actividad
+    client.get("/api/v1/analyze", headers={"X-API-Key": "test-key"}, json={"prompt": "hello"})
+    
+    response = client.get("/metrics")
+    assert response.status_code == 200
+    assert "gateway_requests_total" in response.text
+    assert "gateway_request_duration_seconds" in response.text

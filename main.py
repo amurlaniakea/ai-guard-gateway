@@ -152,6 +152,11 @@ class DeepInspectionMiddleware(BaseHTTPMiddleware):
                 log_event("ERROR", "pii_redaction_failure", error=str(e))
                 return Response(content=response_body, status_code=response.status_code)
         
+        duration = time.perf_counter() - start_time
+        endpoint = request.url.path
+        status = response.status_code
+        REQUESTS_TOTAL.labels(method=request.method, endpoint=endpoint, status=status).inc()
+        REQUEST_DURATION.labels(endpoint=endpoint).observe(duration)
         return response
 app = FastAPI(title="AI Guard Gateway")
 app.add_middleware(DeepInspectionMiddleware)
@@ -162,8 +167,8 @@ async def health():
 
 @app.get("/metrics")
 async def metrics():
-    from monitor import generate_latest_metrics
-    return Response(content=generate_latest_metrics(), media_type="text/plain")
+from monitor import generate_latest_metrics, REQUESTS_TOTAL, REQUESTS_BLOCKED_TOTAL, REQUEST_DURATION, CONTENT_TYPE_LATEST
+    return Response(content=generate_latest_metrics(), media_type=CONTENT_TYPE_LATEST)
 
 @app.post("/v1/chat/completions")
 async def proxy_chat(request: ChatRequest, req_raw: Request):

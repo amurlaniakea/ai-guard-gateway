@@ -1,5 +1,5 @@
 
-from prometheus_client import Counter, Histogram
+from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
 
 # Métricas de Prometheus
 REQUESTS_TOTAL = Counter(
@@ -19,3 +19,8 @@ REQUEST_DURATION = Histogram(
     'Duration of requests in seconds',
     ['endpoint']
 )
+
+
+def generate_latest_metrics():
+    """Genera las métricas actuales en formato Prometheus."""
+    return generate_latest()
