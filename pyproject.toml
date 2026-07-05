@@ -1,0 +1,21 @@
+[project]
+name = "ai-guard-gateway"
+version = "0.1.0"
+description = "Gateway de seguridad para endpoints de IA expuestos"
+authors = [
+    {name = "Pedro Sordo Martínez",email = "amurlaniakea@gmail.com"}
+]
+license = "AGPL-3.0-or-later"
+requires-python = "^3.10"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn>=0.34.0",
+]
+
+
+[tool.poetry]
+package-mode = false
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
