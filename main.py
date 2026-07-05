@@ -40,6 +40,36 @@ from auth import validate_auth
 from rate_limiter import RateLimiter
 from pii_redactor import PIIRedactor
 
+
+import json
+import re
+import unicodedata
+
+# Carga de patrones al iniciar
+try:
+    with open("patterns.json", "r") as f:
+        INJECTION_PATTERNS = json.load(f)
+except Exception:
+    INJECTION_PATTERNS = {"english": [], "spanish": []}
+
+def normalize_text(text: str) -> str:
+    """Normaliza el texto para derrotar ofuscaciones simples."""
+    text = text.lower()
+    text = unicodedata.normalize('NFKD', text)
+    text = re.sub(r'[^a-z0-9\s]', '', text)
+    text = re.sub(r'\s+', ' ', text).strip()
+    return text
+
+def detect_injection(text: str) -> bool:
+    """Detecta inyecciones comparando texto normalizado contra patrones."""
+    normalized = normalize_text(text)
+    all_patterns = INJECTION_PATTERNS["english"] + INJECTION_PATTERNS["spanish"]
+    for p in all_patterns:
+        if normalize_text(p) in normalized:
+            return True
+    return False
+
+
 limiter = RateLimiter(max_requests=5, window_seconds=60)
 redactor = PIIRedactor()
 
