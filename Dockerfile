@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+COPY main.py auth.py rate_limiter.py pii_redactor.py monitor.py patterns.json policy.rego ./
 
 EXPOSE 8080
 
