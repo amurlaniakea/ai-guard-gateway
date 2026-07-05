@@ -73,20 +73,34 @@ class ResponseMock:
 
 
 
-def test_jwt_auth_success(client):
+
+def test_jwt_auth_success():
     import jwt
+    from unittest.mock import patch, AsyncMock
     import os
-    from auth import SECRET_KEY
+    import auth
+
+    test_secret = "test-secret"
+    os.environ["AI_GUARD_SECRET"] = test_secret
+    auth.SECRET_KEY = test_secret
     
-    # Usamos la misma lógica que el gateway: si SECRET_KEY es None, el test fallará
-    # pero en el entorno de test, forzamos una clave para validar el camino
-    secret = SECRET_KEY or "test-secret"
     payload = {"sub": "alice", "role": "admin"}
-    token = jwt.encode(payload, secret, algorithm="HS256")
+    token = jwt.encode(payload, test_secret, algorithm="HS256")
     
-    response = client.post(
-        "/v1/chat/completions",
-        headers={"Authorization": f"Bearer {token}"},
-        json={"model": "gpt-4", "messages": [{"role": "user", "content": "Hola"}]}
-    )
-    assert response.status_code == 200
+    with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
+        mock_post.return_value = AsyncMock(
+            status_code=200, 
+            json=lambda: {"result": {"allow": True}}
+        )
+        mock_post.side_effect = [
+            AsyncMock(status_code=200, json=lambda: {"result": {"allow": True}}),
+            AsyncMock(status_code=200, json=lambda: {"choices": [{"message": {"content": "Hola!"}}]})
+        ]
+        
+        response = client.post(
+            "/v1/chat/completions",
+            headers={"Authorization": f"Bearer {token}"},
+            json={"model": "gpt-4", "messages": [{"role": "user", "content": "Hola"}]}
+        )
+        assert response.status_code == 200
+
