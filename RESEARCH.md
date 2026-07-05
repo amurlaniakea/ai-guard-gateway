@@ -25,11 +25,19 @@ Para combatir las amenazas identificadas, el proyecto implementa tres pilares:
 2. **Saneamiento de Entrada**: Detección nativa de patrones de inyección de prompts basados en el análisis de comportamiento de LLMs.
 3. **Control de Salida**: Redacción de PII para evitar que el modelo actúe como un oráculo de datos sensibles.
 
-## 4. Adopción y Escalabilidad
-El sistema está diseñado para una adopción rápida mediante:
-- **Arquitectura de Proxy**: No requiere cambiar el código del LLM.
-- **Configuración Declarativa**: Uso de OPA (Open Policy Agent) para definir reglas de seguridad sin reiniciar el servicio.
-- **Baja Latencia**: Optimizado en Python/FastAPI para añadir un overhead insignificante (<10ms).
+## 4. Referencias y Fuentes Consultadas
+
+Para la construcción de este gateway se han analizado las siguientes fuentes y marcos de trabajo:
+
+### 4.1. Fuentes Técnicas y Reportes de Vulnerabilidad
+- **Análisis de Secuestro de Endpoints**: *"Attackers are hijacking exposed AI endpoints to run offensive operations - no exploit needed"* (Dev.to). Este análisis fue la señal clave para validar la necesidad de un gateway que bloquee el acceso anónimo a instancias de Ollama y LiteLLM.
+- **Auditorías de Seguridad de GitHub**: Análisis de repositorios de inferencia local para identificar la falta de capas de autenticación por defecto en despliegues de producción.
+
+### 4.2. Marcos de Trabajo (Frameworks)
+- **OWASP Top 10 for LLMs**: El proyecto implementa mitigaciones directas para las vulnerabilidades listadas por OWASP, específicamente:
+    - *LLM01: Prompt Injection* $\rightarrow$ Mitigado mediante el módulo `detect_prompt_injection`.
+    - *LLM06: Sensitive Information Disclosure* $\rightarrow$ Mitigado mediante el `PIIRedactor`.
+- **Zero Trust Architecture (NIST SP 800-207)**: Aplicación del principio de "nunca confiar, siempre verificar" mediante la obligatoriedad de JWT/API Keys antes de cualquier procesamiento de datos.
 
 ---
 **Documento elaborado por:** Pedro Sordo Martínez (Sil)
