@@ -13,6 +13,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Download coverage report
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-report
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -23,6 +29,12 @@ jobs:
           poetry install
       - name: Run tests
         run: PYTHONPATH=. poetry run pytest --cov=. --cov-report=xml:coverage.xml tests/ -v
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
+
 
   sonarcloud:
     needs: test
@@ -30,6 +42,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Download coverage report
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-report
+
         with:
           fetch-depth: 0  # Shallow clones should be avoided when using sonarscanner
 

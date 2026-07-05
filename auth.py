@@ -4,7 +4,7 @@ import jwt
 import logging
 
 logger = logging.getLogger("ai-guard-gateway")
-SECRET_KEY = os.getenv("AI_GUARD_SECRET", "dev-fallback-secret-do-not-use-in-prod")
+SECRET_KEY = os.getenv("SECRET_KEY")
 
 def validate_auth(api_key=None, auth_header=None):
     if api_key == "sk-premium-67890":
