@@ -2,10 +2,10 @@ package httpapi.authz
 
 default allow = false
 
-allow { 
-    input.role == 'premium'
+allow {
+    input.role == "premium"
 }
 
-allow { 
+allow {
     not contains(input.prompt, "malicious")
 }
