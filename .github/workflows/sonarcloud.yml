@@ -17,9 +17,10 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install dependencies
+        env:
+          POETRY_INSTALLER_ONLY_BINARY: ":all:"
         run: |
           pip install --only-binary :all: poetry==2.4.1
-          poetry config installer.no-binary :none:
           poetry install
       - name: Run tests
         run: PYTHONPATH=. poetry run pytest --cov=. --cov-report=xml:coverage.xml tests/ -v
