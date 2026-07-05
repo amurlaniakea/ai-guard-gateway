@@ -18,6 +18,6 @@
 - [x] TAREA-3.3: Implement Pytest suite and CI job in GitHub Actions.
 
 ## Phase 4: Hardening and Production (PENDING)
-- [ ] TAREA-4.1: Expand injection patterns (Multilingual support).
+- [ ] TAREA-4.1: Hardening de Inyección (Umbral: >=85% Bloqueo / <=5% Falsos Positivos)
 - [ ] TAREA-4.2: Implement a proper database for PII patterns and blacklist.
 - [ ] TAREA-4.3: Optimize latency for high-traffic scenarios.
