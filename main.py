@@ -66,7 +66,7 @@ class DeepInspectionMiddleware(BaseHTTPMiddleware):
 
 def log_event(level, event, **kwargs):
     log_entry = {"timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "level": level, "event": event, **kwargs}
-    print(json.dumps(log_entry))
+    logger.info(json.dumps(log_entry))
 
 def detect_prompt_injection(text: str) -> tuple[bool, str]:
     blacklist = ["ignore all previous instructions", "system override", "jailbreak", "malicious"]

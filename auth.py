@@ -4,7 +4,8 @@ from typing import Optional, Dict, Any
 from fastapi import HTTPException, status
 
 # Secretos de seguridad (En producción, estos irían en variables de entorno o Vault)
-SECRET_KEY = "super-secret-key-ai-guard-gateway"
+import os
+SECRET_KEY = os.getenv("AI_GUARD_SECRET", "dev-fallback-secret-do-not-use-in-prod")
 ALGORITHM = "HS256"
 
 # Base de datos simulada de usuarios y API Keys
