@@ -74,6 +74,7 @@ class ResponseMock:
 
 
 
+
 def test_jwt_auth_success():
     import jwt
     from unittest.mock import patch, AsyncMock
@@ -103,4 +104,5 @@ def test_jwt_auth_success():
             json={"model": "gpt-4", "messages": [{"role": "user", "content": "Hola"}]}
         )
         assert response.status_code == 200
+
 
