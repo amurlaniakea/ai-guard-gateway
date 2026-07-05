@@ -5,7 +5,9 @@ from fastapi import HTTPException, status
 
 # Secretos de seguridad (En producción, estos irían en variables de entorno o Vault)
 import os
-SECRET_KEY = os.getenv("AI_GUARD_SECRET", "dev-fallback-secret-do-not-use-in-prod")
+SECRET_KEY = os.getenv("AI_GUARD_SECRET")
+if not SECRET_KEY:
+    raise RuntimeError("CRITICAL ERROR: AI_GUARD_SECRET environment variable is not set. The gateway cannot start without a secure key.")
 ALGORITHM = "HS256"
 
 # Base de datos simulada de usuarios y API Keys
