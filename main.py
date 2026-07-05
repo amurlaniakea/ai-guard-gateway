@@ -167,7 +167,7 @@ async def health():
 
 @app.get("/metrics")
 async def metrics():
-from monitor import generate_latest_metrics, REQUESTS_TOTAL, REQUESTS_BLOCKED_TOTAL, REQUEST_DURATION, CONTENT_TYPE_LATEST
+    from monitor import generate_latest_metrics, REQUESTS_TOTAL, REQUESTS_BLOCKED_TOTAL, REQUEST_DURATION, CONTENT_TYPE_LATEST
     return Response(content=generate_latest_metrics(), media_type=CONTENT_TYPE_LATEST)
 
 @app.post("/v1/chat/completions")

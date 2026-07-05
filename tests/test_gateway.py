@@ -105,7 +105,7 @@ class ResponseMock:
 
 def test_metrics_endpoint():
     # Hacer una petición para generar actividad
-    client.get("/api/v1/analyze", headers={"X-API-Key": "test-key"}, json={"prompt": "hello"})
+    client.post("/api/v1/analyze", headers={"X-API-Key": "test-key"}, json={"prompt": "hello"})
     
     response = client.get("/metrics")
     assert response.status_code == 200
