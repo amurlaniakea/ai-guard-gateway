@@ -6,7 +6,7 @@ authors = [
     {name = "Pedro Sordo Martínez",email = "amurlaniakea@gmail.com"}
 ]
 license = "AGPL-3.0-or-later"
-requires-python = "3.12"
+requires-python = "^3.12"
 dependencies = [
     "fastapi==0.139.0",
     "uvicorn==0.50.0",
