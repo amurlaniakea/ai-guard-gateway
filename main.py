@@ -18,7 +18,6 @@ def normalize_text(text: str) -> str:
     return text
 
 
-def detect_injection(text: str) -> bool:
     normalized = normalize_text(text)
     
     # 1. Disparadores Críticos (Bloqueo Inmediato)
@@ -38,11 +37,9 @@ def detect_injection(text: str) -> bool:
         if special_chars / len(text) > 0.3:
             return True
             
-    return False
 
     if any(r in normalized for r in PATTERNS["roleplay_triggers"]):
 
-def detect_injection(text: str) -> bool:
     normalized = normalize_text(text)
     
     # 1. Disparadores Críticos (Bloqueo Inmediato)
@@ -62,9 +59,7 @@ def detect_injection(text: str) -> bool:
         if special_chars / len(text) > 0.3:
             return True
             
-    return False
 
-    return False
 
 
 import uvicorn
@@ -134,7 +129,6 @@ def normalize_text(text: str) -> str:
     for p in all_patterns:
         if normalize_text(p) in normalized:
 
-def detect_injection(text: str) -> bool:
     normalized = normalize_text(text)
     
     # 1. Disparadores Críticos (Bloqueo Inmediato)
@@ -154,9 +148,7 @@ def detect_injection(text: str) -> bool:
         if special_chars / len(text) > 0.3:
             return True
             
-    return False
 
-    return False
 
 
 limiter = RateLimiter(max_requests=5, window_seconds=60)
