@@ -20,4 +20,4 @@ services:
       - "8181:8181"
     volumes:
       - ./policy.rego:/policy.rego
-    command: ["run", "--server"]
+    command: ["run", "--server", "/policy.rego"]
