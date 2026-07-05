@@ -11,14 +11,14 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a16ebd13914f8d5
+      - uses: actions/checkout@4f1f4aec02e41874fa0262ea8ff5172d7978ad1e
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
       - name: Install dependencies
         run: |
-          pip install poetry
+          pip install --only-binary :all: poetry
           poetry install
       - name: Run tests
         run: PYTHONPATH=. poetry run pytest --cov=. --cov-report=xml:coverage.xml tests/ -v
@@ -32,7 +32,7 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a16ebd13914f8d5
+      - uses: actions/checkout@4f1f4aec02e41874fa0262ea8ff5172d7978ad1e
         with:
           fetch-depth: 0
       - name: Download coverage report
