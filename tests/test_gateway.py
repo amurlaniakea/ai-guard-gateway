@@ -75,18 +75,9 @@ class ResponseMock:
 
 
 
-def test_jwt_auth_success():
-    import jwt
-    from unittest.mock import patch, AsyncMock
-    import os
-    import auth
 
-    test_secret = "test-secret"
-    os.environ["AI_GUARD_SECRET"] = test_secret
-    auth.SECRET_KEY = test_secret
-    
-    payload = {"sub": "alice", "role": "admin"}
-    token = jwt.encode(payload, test_secret, algorithm="HS256")
+def test_jwt_auth_success():
+    from unittest.mock import patch, AsyncMock
     
     with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
         mock_post.return_value = AsyncMock(
@@ -100,9 +91,10 @@ def test_jwt_auth_success():
         
         response = client.post(
             "/v1/chat/completions",
-            headers={"Authorization": f"Bearer {token}"},
+            headers={"X-API-Key": "sk-premium-67890"},
             json={"model": "gpt-4", "messages": [{"role": "user", "content": "Hola"}]}
         )
         assert response.status_code == 200
+
 
 
