@@ -9,6 +9,8 @@
 ## 🎯 Misión
 Proteger la infraestructura de IA contra el abuso y la filtración de datos, implementando capas de defensa proactiva que eviten la inyección de prompts y la exposición de información sensible (PII), manteniendo la baja latencia necesaria para aplicaciones en tiempo real.
 
+Para profundizar en la base científica y la justificación técnica de este proyecto, consulte el archivo [RESEARCH.md](./RESEARCH.md).
+
 ## ✨ Características Principales
 
 ### 🔒 Seguridad Activa
