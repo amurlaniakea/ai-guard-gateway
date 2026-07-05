@@ -11,7 +11,7 @@ if not SECRET_KEY:
 ALGORITHM = "HS256"
 
 # Base de datos simulada de usuarios y API Keys
-# Formato: { "api_key": {"user": "nombre", "role": "rol"} }
+# Security configuration
 USER_DB = {
     "sk-free-12345": {"user": "usuario_gratis", "role": "free"},
     "sk-premium-67890": {"user": "usuario_vip", "role": "premium"},
@@ -34,7 +34,7 @@ class AuthManager:
         """Decodifica y valida un JWT."""
         try:
             payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-            # Verificar que el token no haya expirado
+            # Security configuration
             if "exp" in payload and time.time() > payload["exp"]:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED, 

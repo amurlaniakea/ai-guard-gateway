@@ -79,11 +79,11 @@ def detect_prompt_injection(text: str) -> tuple[bool, str]:
 app = FastAPI(title="AI Guard Gateway - Final Monitoring")
 app.add_middleware(DeepInspectionMiddleware)
 
-OPA_URL = "http://localhost:8181/v1/data/httpapi/authz"
+OPA_URL = os.getenv("OPA_URL", "http://localhost:8181/v1/data/httpapi/authz")
 
 async def check_opa_policy(request: Request, data_to_evaluate: dict) -> tuple[bool, str]:
     try:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(2.0, connect=1.0)) as client:
             response = await client.post(OPA_URL, json=data_to_evaluate, timeout=1.0)
             response.raise_for_status() 
             return response.json().get("allow", False), "OPA Decision"
