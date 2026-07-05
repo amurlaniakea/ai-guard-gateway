@@ -13,6 +13,7 @@ dependencies = [
     "httpx (>=0.28.1,<0.29.0)",
     "pyjwt (>=2.13.0,<3.0.0)",
     "pytest (>=9.1.1,<10.0.0)",
+    "prometheus-client (>=0.25.0,<0.26.0)",
 ]
 
 
@@ -22,3 +23,9 @@ package-mode = false
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[dependency-groups]
+dev = [
+    "bandit (>=1.9.4,<2.0.0)",
+    "flake8 (>=7.3.0,<8.0.0)"
+]

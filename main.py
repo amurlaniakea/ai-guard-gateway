@@ -65,7 +65,7 @@ class DeepInspectionMiddleware(BaseHTTPMiddleware):
                 if any(p in body_str.lower() for p in forbidden_patterns):
                     log_event("CRITICAL", "prompt_injection_detected", ip=client_ip)
                     return JSONResponse(status_code=403, content={"error": "Security Policy Violation: Prompt Injection Detected"})
-            except (UnicodeDecodeError, Exception) as e:
+            except UnicodeDecodeError as e:
                 log_event("ERROR", "body_read_failure", error=str(e))
                 return JSONResponse(status_code=400, content={"error": "Invalid request body"})
 
@@ -87,7 +87,7 @@ class DeepInspectionMiddleware(BaseHTTPMiddleware):
                     headers=dict(response.headers),
                     media_type=response.media_type
                 )
-            except Exception as e:
+            except (ValueError, TypeError, AttributeError) as e:
                 log_event("ERROR", "pii_redaction_failure", error=str(e))
                 return Response(content=response_body, status_code=response.status_code)
 
