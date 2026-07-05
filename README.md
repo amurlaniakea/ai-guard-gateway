@@ -25,8 +25,8 @@ Para profundizar en la base científica y la justificación técnica de este pro
 
 ### 📈 Observabilidad Profesional
 - **Métricas de Prometheus**: Exposición de contadores de peticiones, bloqueos y latencia en `/metrics`.
-- **Logging Estructurado**: Salida de logs en formato JSON lista para integración con ELK o Grafana Loki.
-- **Health Checks**: Endpoints de estado para orquestadores como Kubernetes.
+- **Logging Estructurado**: Salida de logs en formato JSON lista para integración con ELK o Standard JSON logs (compatible with Loki/ELK).
+- **Health Checks**: Endpoints de estado para orquestadores como Docker containers.
 
 ## 🛠️ Stack Tecnológico
 - **Backend**: Python 3.12 + FastAPI
@@ -58,7 +58,7 @@ El gateway estará disponible en `http://localhost:8080`.
 curl -X POST http://localhost:8080/v1/chat/completions \
      -H "X-API-Key: sk-premium-67890" \
      -H "Content-Type: application/json" \
-     -d '{"prompt": "Hola, ¿cómo estás?"}'
+     -d '{"model": "gpt-4", "messages": [{"role": "user", "content": "Hola"}]}': "Hola, ¿cómo estás?"}'
 ```
 
 ## ⚖️ Licencia
