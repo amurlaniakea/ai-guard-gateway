@@ -8,6 +8,30 @@ import httpx
 
 client = TestClient(app)
 
+def test_jwt_auth_success():
+    from unittest.mock import patch, AsyncMock
+    
+    with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
+        mock_post.return_value = AsyncMock(
+            status_code=200, 
+            json=lambda: {"result": {"allow": True}}
+        )
+        mock_post.side_effect = [
+            AsyncMock(status_code=200, json=lambda: {"result": {"allow": True}}),
+            AsyncMock(status_code=200, json=lambda: {"choices": [{"message": {"content": "Hola!"}}]})
+        ]
+        
+        response = client.post(
+            "/v1/chat/completions",
+            headers={"X-API-Key": "sk-premium-67890"},
+            json={"model": "gpt-4", "messages": [{"role": "user", "content": "Hola"}]}
+        )
+        assert response.status_code == 200
+
+
+
+
+
 def test_auth_failure():
     response = client.post("/v1/chat/completions", json={"model": "gpt-4", "messages": []})
     assert response.status_code == 401
@@ -73,28 +97,6 @@ class ResponseMock:
 
 
 
-
-
-
-def test_jwt_auth_success():
-    from unittest.mock import patch, AsyncMock
-    
-    with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
-        mock_post.return_value = AsyncMock(
-            status_code=200, 
-            json=lambda: {"result": {"allow": True}}
-        )
-        mock_post.side_effect = [
-            AsyncMock(status_code=200, json=lambda: {"result": {"allow": True}}),
-            AsyncMock(status_code=200, json=lambda: {"choices": [{"message": {"content": "Hola!"}}]})
-        ]
-        
-        response = client.post(
-            "/v1/chat/completions",
-            headers={"X-API-Key": "sk-premium-67890"},
-            json={"model": "gpt-4", "messages": [{"role": "user", "content": "Hola"}]}
-        )
-        assert response.status_code == 200
 
 
 
