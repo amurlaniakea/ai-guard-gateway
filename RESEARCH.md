@@ -30,14 +30,14 @@ Para combatir las amenazas identificadas, el proyecto implementa tres pilares:
 Para la construcción de este gateway se han analizado las siguientes fuentes y marcos de trabajo:
 
 ### 4.1. Fuentes Técnicas y Reportes de Vulnerabilidad
-- **Análisis de Secuestro de Endpoints**: *"Attackers are hijacking exposed AI endpoints to run offensive operations - no exploit needed"* (Dev.to). Este análisis fue la señal clave para validar la necesidad de un gateway que bloquee el acceso anónimo a instancias de Ollama y LiteLLM.
+- **Análisis de Secuestro de Endpoints**: [*"Attackers are hijacking exposed AI endpoints to run offensive operations - no exploit needed"*](https://dev.to/cyclopt_dimitrisk/attackers-are-hijacking-exposed-ai-endpoints-to-run-offensive-operations-no-exploit-needed-123d) (Dev.to). Este análisis fue la señal clave para validar la necesidad de un gateway que bloquee el acceso anónimo a instancias de Ollama y LiteLLM.
 - **Auditorías de Seguridad de GitHub**: Análisis de repositorios de inferencia local para identificar la falta de capas de autenticación por defecto en despliegues de producción.
 
 ### 4.2. Marcos de Trabajo (Frameworks)
-- **OWASP Top 10 for LLMs**: El proyecto implementa mitigaciones directas para las vulnerabilidades listadas por OWASP, específicamente:
+- **[OWASP Top 10 for LLM Applications](https://owasp.org/www-project-top-10-for-large-language-model-applications/)**: El proyecto implementa mitigaciones directas para las vulnerabilidades listadas por OWASP, específicamente:
     - *LLM01: Prompt Injection* $\rightarrow$ Mitigado mediante el módulo `detect_prompt_injection`.
     - *LLM06: Sensitive Information Disclosure* $\rightarrow$ Mitigado mediante el `PIIRedactor`.
-- **Zero Trust Architecture (NIST SP 800-207)**: Aplicación del principio de "nunca confiar, siempre verificar" mediante la obligatoriedad de JWT/API Keys antes de cualquier procesamiento de datos.
+- **[NIST SP 800-207 Zero Trust Architecture](https://csrc.nist.gov/pubs/sp/800/207/final)**: Aplicación del principio de "nunca confiar, siempre verificar" mediante la obligatoriedad de JWT/API Keys antes de cualquier procesamiento de datos.
 
 ---
 **Documento elaborado por:** Pedro Sordo Martínez (Sil)
