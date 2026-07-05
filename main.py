@@ -6,16 +6,17 @@ from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 from rate_limiter import RateLimiter
+from pii_redactor import PIIRedactor # Importamos el redactor
 
 import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("ai-guard-gateway.main")
 
 limiter = RateLimiter(requests_limit=5, window_seconds=60)
+redactor = PIIRedactor() # Instancia global del redactor
 
 class DeepInspectionMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
-        # 1. RATE LIMITING (Al inicio para máxima eficiencia)
         client_ip = request.client.host if request.client else "unknown"
         if not limiter.is_allowed(client_ip):
             logger.warning(f"[RATE LIMIT BLOCK] IP: {client_ip}")
@@ -24,7 +25,6 @@ class DeepInspectionMiddleware(BaseHTTPMiddleware):
                 content={"detail": "Too Many Requests - Límite de peticiones superado."}
             )
 
-        # 2. INSPECCIÓN DE SOLICITUD
         req_body = await request.body()
         async def receive():
             return {"type": "http.request", "body": req_body, "more_body": False}
@@ -46,15 +46,31 @@ class DeepInspectionMiddleware(BaseHTTPMiddleware):
         res_body_list = []
         async for chunk in response.body_iterator:
             res_body_list.append(chunk)
-        res_body = b''.join(res_body_list)
+        res_body_raw = b''.join(res_body_list)
+        
+        # --- REDACCIÓN DE PII (TAREA-3.2) ---
+        try:
+            res_text = res_body_raw.decode("utf-8")
+            redacted_text, count = redactor.redact(res_text)
+            if count > 0:
+                logger.info(f"[PII REDACTED] Se han eliminado {count} datos sensibles de la respuesta.")
+            res_body = redacted_text.encode("utf-8")
+        except UnicodeDecodeError:
+            logger.warning("[PII REDACTOR] Error decodificando cuerpo de respuesta, se envía original.")
+            res_body = res_body_raw
 
         logger.info(f"[OUTGOING] Status: {response.status_code} | Duración: {duration:.4f}s")
         
-        # Añadir cabeceras de rate limit a la respuesta
         remaining = limiter.get_remaining(client_ip)
         headers = dict(response.headers)
         headers["X-RateLimit-Limit"] = str(limiter.requests_limit)
         headers["X-RateLimit-Remaining"] = str(remaining)
+
+        # Eliminamos Content-Length para que FastAPI recalcule la longitud del cuerpo redactado
+        if "content-length" in headers:
+            del headers["content-length"]
+        if "Content-Length" in headers:
+            del headers["Content-Length"]
 
         return Response(
             content=res_body,
@@ -75,7 +91,7 @@ def detect_prompt_injection(text: str) -> tuple[bool, str]:
             return True, f"Patrón de inyección detectado: {pattern}"
     return False, ""
 
-app = FastAPI(title="AI Guard Gateway - Final Prototipo")
+app = FastAPI(title="AI Guard Gateway - Prototipo con PII Redactor")
 app.add_middleware(DeepInspectionMiddleware)
 
 OPA_URL = "http://localhost:8181/v1/data/httpapi/authz"
@@ -89,6 +105,10 @@ async def check_opa_policy(request: Request, data_to_evaluate: dict) -> tuple[bo
             return result.get("allow", False), "OPA Decision"
     except Exception:
         return None, "OPA unavailable"
+
+@app.get("/test-leak")
+async def test_leak():
+    return {"message": "Datos sensibles: mi email es sil@example.com y mi tarjeta es 1234-5678-9012-3456"}
 
 @app.get("/health")
 async def health():
@@ -128,14 +148,14 @@ async def proxy_routing(path: str, request: Request):
 
     return JSONResponse(
         content={
-            "gateway_status": "secure_and_rate_limited",
+            "gateway_status": "secure_and_pii_redacted",
             "target_path": path,
             "method": request.method,
             "security_checks": {
                 "native_detection": "passed",
                 "opa_evaluation": "allowed" if opa_allowed else "skipped (unavailable)"
             },
-            "simulated_llm_response": "Tu solicitud ha sido procesada bajo control de tasa."
+            "simulated_llm_response": "Tu solicitud ha sido procesada. Si hubiera habido emails o tarjetas, habrían sido redactados."
         },
         status_code=200
     )
