@@ -21,3 +21,7 @@
 - [ ] TAREA-4.1: Hardening de Inyección (Umbral: >=85% Bloqueo / <=5% Falsos Positivos)
 - [ ] TAREA-4.2: Implement a proper database for PII patterns and blacklist.
 - [ ] TAREA-4.3: Optimize latency for high-traffic scenarios.
+
+- [ ] TAREA-4.4: Detección de ataques codificados (Base64, hex, ROT13) y ataques en idiomas
+      distintos de ES/EN. El detector actual normaliza texto plano pero no decodifica payloads
+      codificados ni cubre patrones fuera de español/inglés.
