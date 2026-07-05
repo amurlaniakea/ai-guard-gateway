@@ -1,0 +1,23 @@
+
+version: '3.8'
+
+services:
+  gateway:
+    image: ai-guard-gateway:latest
+    ports:
+      - "8080:8080"
+    environment:
+      - OPA_URL=http://opa:8181/v1/data/httpapi/authz
+      - BACKEND_URL=http://host.docker.internal:11434
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - opa
+
+  opa:
+    image: openpolicyagent/opa:latest
+    ports:
+      - "8181:8181"
+    volumes:
+      - ./policy.rego:/policy.rego
+    command: ["run", "--server"]
