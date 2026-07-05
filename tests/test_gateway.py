@@ -71,3 +71,22 @@ class ResponseMock:
     def json(self):
         return self._json_data
 
+
+
+def test_jwt_auth_success(client):
+    import jwt
+    import os
+    from auth import SECRET_KEY
+    
+    # Usamos la misma lógica que el gateway: si SECRET_KEY es None, el test fallará
+    # pero en el entorno de test, forzamos una clave para validar el camino
+    secret = SECRET_KEY or "test-secret"
+    payload = {"sub": "alice", "role": "admin"}
+    token = jwt.encode(payload, secret, algorithm="HS256")
+    
+    response = client.post(
+        "/v1/chat/completions",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"model": "gpt-4", "messages": [{"role": "user", "content": "Hola"}]}
+    )
+    assert response.status_code == 200
