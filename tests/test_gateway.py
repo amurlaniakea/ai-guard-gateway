@@ -8,25 +8,26 @@ import httpx
 
 client = TestClient(app)
 
+
 def test_jwt_auth_success():
-    from unittest.mock import patch, AsyncMock
+    import jwt
+    import os
+    import auth
     
-    with patch("httpx.AsyncClient.post", new_callable=AsyncMock) as mock_post:
-        mock_post.return_value = AsyncMock(
-            status_code=200, 
-            json=lambda: {"result": {"allow": True}}
-        )
-        mock_post.side_effect = [
-            AsyncMock(status_code=200, json=lambda: {"result": {"allow": True}}),
-            AsyncMock(status_code=200, json=lambda: {"choices": [{"message": {"content": "Hola!"}}]})
-        ]
-        
-        response = client.post(
-            "/v1/chat/completions",
-            headers={"X-API-Key": "sk-premium-67890"},
-            json={"model": "gpt-4", "messages": [{"role": "user", "content": "Hola"}]}
-        )
-        assert response.status_code == 200
+    test_secret = "test-secret"
+    os.environ["AI_GUARD_SECRET"] = test_secret
+    auth.SECRET_KEY = test_secret
+    
+    payload = {"sub": "alice", "role": "admin"}
+    token = jwt.encode(payload, test_secret, algorithm="HS256")
+    
+    # Prueba unitaria directa: sin FastAPI, sin httpx, sin mocks de red
+    user_info = auth.validate_auth(None, f"Bearer {token}")
+    
+    assert user_info is not None
+    assert user_info["user"] == "alice"
+    assert user_info["role"] == "admin"
+
 
 
 
