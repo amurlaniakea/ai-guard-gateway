@@ -22,7 +22,7 @@ jobs:
           pip install poetry
           poetry install
       - name: Run tests
-        run: poetry run pytest tests/ -v
+        run: PYTHONPATH=. poetry run pytest tests/ -v
 
   sonarcloud:
     needs: test
