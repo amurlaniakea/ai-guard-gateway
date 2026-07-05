@@ -6,14 +6,15 @@ from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 from rate_limiter import RateLimiter
-from pii_redactor import PIIRedactor # Importamos el redactor
+from pii_redactor import PIIRedactor
+from auth import AuthManager # Importamos el gestor de autenticación
 
 import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("ai-guard-gateway.main")
 
 limiter = RateLimiter(requests_limit=5, window_seconds=60)
-redactor = PIIRedactor() # Instancia global del redactor
+redactor = PIIRedactor()
 
 class DeepInspectionMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
@@ -48,15 +49,13 @@ class DeepInspectionMiddleware(BaseHTTPMiddleware):
             res_body_list.append(chunk)
         res_body_raw = b''.join(res_body_list)
         
-        # --- REDACCIÓN DE PII (TAREA-3.2) ---
         try:
             res_text = res_body_raw.decode("utf-8")
             redacted_text, count = redactor.redact(res_text)
             if count > 0:
-                logger.info(f"[PII REDACTED] Se han eliminado {count} datos sensibles de la respuesta.")
+                logger.info(f"[PII REDACTED] Se han eliminado {count} datos sensibles.")
             res_body = redacted_text.encode("utf-8")
         except UnicodeDecodeError:
-            logger.warning("[PII REDACTOR] Error decodificando cuerpo de respuesta, se envía original.")
             res_body = res_body_raw
 
         logger.info(f"[OUTGOING] Status: {response.status_code} | Duración: {duration:.4f}s")
@@ -65,12 +64,6 @@ class DeepInspectionMiddleware(BaseHTTPMiddleware):
         headers = dict(response.headers)
         headers["X-RateLimit-Limit"] = str(limiter.requests_limit)
         headers["X-RateLimit-Remaining"] = str(remaining)
-
-        # Eliminamos Content-Length para que FastAPI recalcule la longitud del cuerpo redactado
-        if "content-length" in headers:
-            del headers["content-length"]
-        if "Content-Length" in headers:
-            del headers["Content-Length"]
 
         return Response(
             content=res_body,
@@ -91,7 +84,7 @@ def detect_prompt_injection(text: str) -> tuple[bool, str]:
             return True, f"Patrón de inyección detectado: {pattern}"
     return False, ""
 
-app = FastAPI(title="AI Guard Gateway - Prototipo con PII Redactor")
+app = FastAPI(title="AI Guard Gateway - Prototipo con Autenticación")
 app.add_middleware(DeepInspectionMiddleware)
 
 OPA_URL = "http://localhost:8181/v1/data/httpapi/authz"
@@ -106,19 +99,31 @@ async def check_opa_policy(request: Request, data_to_evaluate: dict) -> tuple[bo
     except Exception:
         return None, "OPA unavailable"
 
-@app.get("/test-leak")
-async def test_leak():
-    return {"message": "Datos sensibles: mi email es sil@example.com y mi tarjeta es 1234-5678-9012-3456"}
-
 @app.get("/health")
 async def health():
     return {"status": "healthy"}
 
 @app.api_route("/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
 async def proxy_routing(path: str, request: Request):
+    # 1. Autenticación y Autorización (TAREA-3.3)
+    api_key = request.headers.get("X-API-Key")
+    auth_header = request.headers.get("Authorization")
+    user_info = None
+
+    if api_key:
+        user_info = AuthManager.validate_api_key(api_key)
+    elif auth_header and auth_header.startswith("Bearer "):
+        token = auth_header.split(" ")[1]
+        user_info = AuthManager.validate_jwt(token)
+    else:
+        raise HTTPException(status_code=401, detail="Falta autenticación. Proporcione X-API-Key o Bearer Token.")
+
+    # Ahora tenemos la identidad del usuario (user_info) que podemos pasar a OPA o usar para cuotas
+    logger.info(f"[AUTH] Usuario autenticado: {user_info.get('user')} con rol {user_info.get('role')}")
+
+    # 2. Verificación de Seguridad Nativa
     body_bytes = await request.body()
     body_str = body_bytes.decode("utf-8") if body_bytes else ""
-
     prompt_text = body_str
     if body_str and request.headers.get('content-type') == 'application/json':
         try:
@@ -132,12 +137,14 @@ async def proxy_routing(path: str, request: Request):
         logger.warning(f"[SECURITY BLOCK] Prompt malicioso detectado: {reason}")
         raise HTTPException(status_code=403, detail=f"Solicitud bloqueada por seguridad: {reason}")
 
+    # 3. Evaluación OPA (incluyendo la identidad del usuario en el input)
     opa_input = {
         "request": {
             "method": request.method,
             "path": "/" + path, 
             "headers": dict(request.headers),
-            "body": json.loads(body_str) if body_str and request.headers.get('content-type') == 'application/json' else body_str
+            "body": json.loads(body_str) if body_str and request.headers.get('content-type') == 'application/json' else body_str,
+            "user": user_info # Pasamos la identidad al motor de políticas
         }
     }
     
@@ -148,14 +155,16 @@ async def proxy_routing(path: str, request: Request):
 
     return JSONResponse(
         content={
-            "gateway_status": "secure_and_pii_redacted",
+            "gateway_status": "authorized_and_secure",
+            "user": user_info.get("user"),
+            "role": user_info.get("role"),
             "target_path": path,
             "method": request.method,
             "security_checks": {
                 "native_detection": "passed",
                 "opa_evaluation": "allowed" if opa_allowed else "skipped (unavailable)"
             },
-            "simulated_llm_response": "Tu solicitud ha sido procesada. Si hubiera habido emails o tarjetas, habrían sido redactados."
+            "simulated_llm_response": "Tu solicitud ha sido autenticada, autorizada y procesada."
         },
         status_code=200
     )
