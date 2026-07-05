@@ -17,14 +17,53 @@ def normalize_text(text: str) -> str:
     text = re.sub(r'\s+', ' ', text).strip()
     return text
 
+
 def detect_injection(text: str) -> bool:
     normalized = normalize_text(text)
+    
+    # 1. Disparadores Críticos (Bloqueo Inmediato)
+    if any(trigger in normalized for trigger in PATTERNS["critical_triggers"]):
+        return True
+    
+    # 2. Intersección Verbo + Sujeto
     has_verb = any(v in normalized for v in PATTERNS["nullification_verbs"])
     has_subject = any(s in normalized for s in PATTERNS["control_subjects"])
     if has_verb and has_subject:
         return True
+    
+    # 3. Detección de Ofuscación Extrema
+    # Si el texto original tiene demasiados caracteres no alfanuméricos en relación al largo
+    if len(text) > 10:
+        special_chars = len([c for c in text if not c.isalnum() and not c.isspace()])
+        if special_chars / len(text) > 0.3:
+            return True
+            
+    return False
+
     if any(r in normalized for r in PATTERNS["roleplay_triggers"]):
+
+def detect_injection(text: str) -> bool:
+    normalized = normalize_text(text)
+    
+    # 1. Disparadores Críticos (Bloqueo Inmediato)
+    if any(trigger in normalized for trigger in PATTERNS["critical_triggers"]):
         return True
+    
+    # 2. Intersección Verbo + Sujeto
+    has_verb = any(v in normalized for v in PATTERNS["nullification_verbs"])
+    has_subject = any(s in normalized for s in PATTERNS["control_subjects"])
+    if has_verb and has_subject:
+        return True
+    
+    # 3. Detección de Ofuscación Extrema
+    # Si el texto original tiene demasiados caracteres no alfanuméricos en relación al largo
+    if len(text) > 10:
+        special_chars = len([c for c in text if not c.isalnum() and not c.isspace()])
+        if special_chars / len(text) > 0.3:
+            return True
+            
+    return False
+
     return False
 
 
@@ -94,7 +133,29 @@ def normalize_text(text: str) -> str:
     all_patterns = INJECTION_PATTERNS["english"] + INJECTION_PATTERNS["spanish"]
     for p in all_patterns:
         if normalize_text(p) in normalized:
+
+def detect_injection(text: str) -> bool:
+    normalized = normalize_text(text)
+    
+    # 1. Disparadores Críticos (Bloqueo Inmediato)
+    if any(trigger in normalized for trigger in PATTERNS["critical_triggers"]):
+        return True
+    
+    # 2. Intersección Verbo + Sujeto
+    has_verb = any(v in normalized for v in PATTERNS["nullification_verbs"])
+    has_subject = any(s in normalized for s in PATTERNS["control_subjects"])
+    if has_verb and has_subject:
+        return True
+    
+    # 3. Detección de Ofuscación Extrema
+    # Si el texto original tiene demasiados caracteres no alfanuméricos en relación al largo
+    if len(text) > 10:
+        special_chars = len([c for c in text if not c.isalnum() and not c.isspace()])
+        if special_chars / len(text) > 0.3:
             return True
+            
+    return False
+
     return False
 
 

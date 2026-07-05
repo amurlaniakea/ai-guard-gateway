@@ -12,7 +12,8 @@
     "salta",
     "desactiva",
     "disable",
-    "break"
+    "break",
+    "list"
   ],
   "control_subjects": [
     "instrucciones",
@@ -31,9 +32,13 @@
     "pasos",
     "steps",
     "programacion",
-    "programming"
+    "programming",
+    "clave",
+    "password",
+    "secret",
+    "secreto"
   ],
-  "roleplay_triggers": [
+  "critical_triggers": [
     "dan",
     "do anything now",
     "developer mode",
@@ -45,6 +50,10 @@
     "simulation",
     "simulacion",
     "persona",
-    "hacker"
+    "hacker",
+    "modo dios",
+    "god mode",
+    "jailbreak",
+    "bypass safety"
   ]
 }
