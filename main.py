@@ -1,4 +1,33 @@
 
+
+import json
+import re
+import unicodedata
+
+try:
+    with open("patterns.json", "r") as f:
+        PATTERNS = json.load(f)
+except Exception:
+    PATTERNS = {"nullification_verbs": [], "control_subjects": [], "roleplay_triggers": []}
+
+def normalize_text(text: str) -> str:
+    text = text.lower()
+    text = unicodedata.normalize('NFKD', text)
+    text = re.sub(r'[^a-z0-9\s]', ' ', text)
+    text = re.sub(r'\s+', ' ', text).strip()
+    return text
+
+def detect_injection(text: str) -> bool:
+    normalized = normalize_text(text)
+    has_verb = any(v in normalized for v in PATTERNS["nullification_verbs"])
+    has_subject = any(s in normalized for s in PATTERNS["control_subjects"])
+    if has_verb and has_subject:
+        return True
+    if any(r in normalized for r in PATTERNS["roleplay_triggers"]):
+        return True
+    return False
+
+
 import uvicorn
 import httpx
 import json
@@ -60,7 +89,6 @@ def normalize_text(text: str) -> str:
     text = re.sub(r'\s+', ' ', text).strip()
     return text
 
-def detect_injection(text: str) -> bool:
     """Detecta inyecciones comparando texto normalizado contra patrones."""
     normalized = normalize_text(text)
     all_patterns = INJECTION_PATTERNS["english"] + INJECTION_PATTERNS["spanish"]
