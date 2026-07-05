@@ -45,50 +45,42 @@ def normalize_text(text: str) -> str:
 
 
 
+
+def _check_critical_triggers(normalized: str) -> bool:
+    return any(trigger in normalized for trigger in PATTERNS.get("critical_triggers", []))
+
+def _check_nullification(normalized: str) -> bool:
+    has_null_verb = any(v in normalized for v in PATTERNS.get("nullification_verbs", []))
+    has_ctrl_subj = any(s in normalized for s in PATTERNS.get("control_subjects", []))
+    return has_null_verb and has_ctrl_subj
+
+def _check_revelation(normalized: str) -> bool:
+    has_rev_verb = any(v in normalized for v in PATTERNS.get("revelation_verbs", []))
+    has_info_target = any(s in normalized for s in PATTERNS.get("info_targets", []))
+    return has_rev_verb and has_info_target
+
+def _check_roleplay(normalized: str) -> bool:
+    has_role = any(r in normalized for r in PATTERNS.get("roleplay_starts", []))
+    has_null_verb = any(v in normalized for v in PATTERNS.get("nullification_verbs", []))
+    has_ctrl_subj = any(s in normalized for s in PATTERNS.get("control_subjects", []))
+    return has_role and (has_null_verb or has_ctrl_subj)
+
+def _check_obfuscation(text: str) -> bool:
+    if len(text) <= 10:
+        return False
+    special_chars = len([c for c in text if not c.isalnum() and not c.isspace()])
+    return special_chars / len(text) > 0.3
+
 def detect_injection(text: str) -> bool:
     normalized = normalize_text(text)
     
-    # CAPA 1: Disparadores Críticos (Bloqueo Inmediato)
-    if any(trigger in normalized for trigger in PATTERNS.get("critical_triggers", [])):
-        return True
+    if _check_critical_triggers(normalized): return True
+    if _check_nullification(normalized): return True
+    if _check_revelation(normalized): return True
+    if _check_roleplay(normalized): return True
+    if _check_obfuscation(text): return True
     
-    # CAPA 2: Intersección Anulación (Verbo Anulación + Sujeto Control)
-    has_null_verb = any(v in normalized for v in PATTERNS.get("nullification_verbs", []))
-    has_ctrl_subj = any(s in normalized for s in PATTERNS.get("control_subjects", []))
-    if has_null_verb and has_ctrl_subj:
-        return True
-    
-    # CAPA 3: Intersección Revelación (Verbo Revelación + Objetivo Info)
-    has_rev_verb = any(v in normalized for v in PATTERNS.get("revelation_verbs", []))
-    has_info_target = any(s in normalized for s in PATTERNS.get("info_targets", []))
-    if has_rev_verb and has_info_target:
-        return True
-    
-    # CAPA 4: Roleplay Malicioso (Inicio Roleplay + (Verbo Anulación o Sujeto Control))
-    has_role = any(r in normalized for r in PATTERNS.get("roleplay_starts", []))
-    if has_role and (has_null_verb or has_ctrl_subj):
-        return True
-    
-    # CAPA 5: Detección de Ofuscación Extrema
-    if len(text) > 10:
-        special_chars = len([c for c in text if not c.isalnum() and not c.isspace()])
-        if special_chars / len(text) > 0.3:
-            return True
-            
     return False
-
-
-
-    has_verb = any(v in normalized for v in PATTERNS.get("nullification_verbs", []))
-    has_subject = any(s in normalized for s in PATTERNS.get("control_subjects", []))
-    if has_verb and has_subject:
-        return True
-    if len(text) > 10:
-        special_chars = len([c for c in text if not c.isalnum() and not c.isspace()])
-        if special_chars / len(text) > 0.3:
-            return True
-    return False
-
 # --- MODELOS DE VALIDACIÓN ---
 class ChatRequest(BaseModel):
     model: str = Field(..., min_length=1)
@@ -106,47 +98,43 @@ limiter = RateLimiter(max_requests=5, window_seconds=60)
 redactor = PIIRedactor()
 
 # --- MIDDLEWARE DE INSPECCIÓN PROFUNDA ---
+
 class DeepInspectionMiddleware(BaseHTTPMiddleware):
+    async def _analyze_body_for_injection(self, request: Request) -> Optional[Response]:
+        if request.method != "POST":
+            return None
+        try:
+            body_bytes = await request.body()
+            body_json = json.loads(body_bytes.decode("utf-8"))
+            if "messages" in body_json and isinstance(body_json["messages"], list):
+                all_content = " ".join([m.get("content", "") for m in body_json["messages"] if isinstance(m, dict)])
+                if detect_injection(all_content):
+                    log_event("CRITICAL", "prompt_injection_detected")
+                    return JSONResponse(status_code=403, content={"error": "Security Policy Violation: Prompt Injection Detected"})
+            else:
+                body_str = body_bytes.decode("utf-8")
+                if detect_injection(body_str):
+                    log_event("CRITICAL", "prompt_injection_detected")
+                    return JSONResponse(status_code=403, content={"error": "Security Policy Violation: Prompt Injection Detected"})
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            return JSONResponse(status_code=400, content={"error": "Invalid request body"})
+        return None
+
     async def dispatch(self, request: Request, call_next):
         if request.url.path in ["/metrics", "/health"]:
             return await call_next(request)
-
-        client_ip = request.client.host if request.client else "unknown"
         
-        # 1. Rate Limiting
+        client_ip = request.client.host if request.client else "unknown"
         if not limiter.allow_request(client_ip):
             log_event("WARN", "rate_limit_exceeded", ip=client_ip)
             return JSONResponse(status_code=429, content={"error": "Too Many Requests"})
-
-        # 2. Inyección de Prompts (Detección Híbrida)
         
-        # 2. Inyección de Prompts (Detección sobre CONTENIDO)
-        if request.method == "POST":
-            try:
-                body_bytes = await request.body()
-                body_json = json.loads(body_bytes.decode("utf-8"))
-                
-                # Extraemos todos los contenidos de los mensajes para analizar la inyección
-                if "messages" in body_json and isinstance(body_json["messages"], list):
-                    all_content = " ".join([m.get("content", "") for m in body_json["messages"] if isinstance(m, dict)])
-                    if detect_injection(all_content):
-                        log_event("CRITICAL", "prompt_injection_detected", ip=client_ip)
-                        return JSONResponse(status_code=403, content={"error": "Security Policy Violation: Prompt Injection Detected"})
-                else:
-                    # Si no hay mensajes, analizamos el body crudo por si acaso, 
-                    # pero el ratio de caracteres especiales ya no disparará falsos positivos masivos
-                    body_str = body_bytes.decode("utf-8")
-                    if detect_injection(body_str):
-                        log_event("CRITICAL", "prompt_injection_detected", ip=client_ip)
-                        return JSONResponse(status_code=403, content={"error": "Security Policy Violation: Prompt Injection Detected"})
-            except (json.JSONDecodeError, UnicodeDecodeError) as e:
-                log_event("ERROR", "body_read_failure", error=str(e))
-                return JSONResponse(status_code=400, content={"error": "Invalid request body"})
-
-
+        injection_response = await self._analyze_body_for_injection(request)
+        if injection_response:
+            return injection_response
+        
         response = await call_next(request)
         
-        # 3. Redacción de PII en la respuesta
         if response.status_code == 200:
             response_body = b""
             async for chunk in response.body_iterator:
@@ -163,9 +151,8 @@ class DeepInspectionMiddleware(BaseHTTPMiddleware):
             except Exception as e:
                 log_event("ERROR", "pii_redaction_failure", error=str(e))
                 return Response(content=response_body, status_code=response.status_code)
-
+        
         return response
-
 app = FastAPI(title="AI Guard Gateway")
 app.add_middleware(DeepInspectionMiddleware)
 
@@ -211,7 +198,7 @@ async def proxy_chat(request: ChatRequest, req_raw: Request):
             return Response(
                 content=backend_res.content,
                 status_code=backend_res.status_code,
-                headers=dict(backend_res.headers)
+                headers=backend_res.headers
             )
     except httpx.HTTPError as e:
         log_event("ERROR", "backend_failure", error=str(e))

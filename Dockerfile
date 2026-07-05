@@ -15,4 +15,7 @@ COPY . .
 EXPOSE 8080
 
 # Cambiamos la llamada al binario por la llamada al módulo de python
+RUN useradd -m appuser
+USER appuser
+
 CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]

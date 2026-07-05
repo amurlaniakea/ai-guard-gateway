@@ -1,0 +1,11 @@
+
+.git
+.github
+tests/
+*.md
+poetry.lock
+.pytest_cache
+.coverage
+coverage.xml
+.env
+**/__pycache__
