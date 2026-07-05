@@ -43,6 +43,7 @@ def normalize_text(text: str) -> str:
     return text
 
 
+
 def detect_injection(text: str) -> bool:
     normalized = normalize_text(text)
     
@@ -50,16 +51,15 @@ def detect_injection(text: str) -> bool:
     if any(trigger in normalized for trigger in PATTERNS.get("critical_triggers", [])):
         return True
     
-    # 2. Intersección Anulación: Verbo Anulación + Sujeto Control
-    has_null_verb = any(v in normalized for v in PATTERNS.get("nullification_verbs", []))
-    has_ctrl_subj = any(s in normalized for s in PATTERNS.get("control_subjects", []))
-    if has_null_verb and has_ctrl_subj:
+    # 2. Intersección Anulación: Verbo + Sujeto
+    has_verb = any(v in normalized for v in PATTERNS.get("nullification_verbs", []))
+    has_subject = any(s in normalized for s in PATTERNS.get("control_subjects", []))
+    if has_verb and has_subject:
         return True
     
-    # 3. Intersección Revelación: Verbo Revelación + Objetivo Info
-    has_rev_verb = any(v in normalized for v in PATTERNS.get("revelation_verbs", []))
-    has_info_target = any(s in normalized for s in PATTERNS.get("info_targets", []))
-    if has_rev_verb and has_info_target:
+    # 3. Roleplay Malicioso: (Actúa como... + Anulación/Sujeto)
+    has_role = any(r in normalized for r in PATTERNS.get("roleplay_starts", []))
+    if has_role and (has_verb or has_subject):
         return True
     
     # 4. Detección de Ofuscación Extrema
@@ -69,6 +69,7 @@ def detect_injection(text: str) -> bool:
             return True
             
     return False
+
 
     has_verb = any(v in normalized for v in PATTERNS.get("nullification_verbs", []))
     has_subject = any(s in normalized for s in PATTERNS.get("control_subjects", []))

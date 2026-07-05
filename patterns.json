@@ -14,7 +14,11 @@
     "disable",
     "break",
     "omitir",
-    "skip"
+    "skip",
+    "borra",
+    "erase",
+    "elimina",
+    "remove"
   ],
   "control_subjects": [
     "instrucciones",
@@ -33,37 +37,17 @@
     "pasos",
     "steps",
     "programacion",
-    "programming"
-  ],
-  "revelation_verbs": [
-    "muestra",
-    "show",
-    "revela",
-    "reveal",
-    "imprime",
-    "print",
-    "dime",
-    "tell",
-    "escribe",
-    "write",
-    "lista",
-    "list",
-    "dump",
-    "expone",
-    "expose"
-  ],
-  "info_targets": [
-    "prompt",
-    "instrucciones",
-    "instructions",
-    "configuracion",
-    "config",
-    "secrets",
-    "password",
+    "programming",
     "clave",
-    "internal",
-    "interno",
-    "secretos"
+    "password",
+    "secret",
+    "secreto",
+    "restricciones",
+    "restrictions",
+    "seguridad",
+    "security",
+    "configuracion",
+    "config"
   ],
   "critical_triggers": [
     "dan",
@@ -82,6 +66,22 @@
     "god mode",
     "jailbreak",
     "bypass safety",
-    "unfiltered"
+    "unfiltered",
+    "no rules",
+    "sin reglas",
+    "ignore all",
+    "ignora todo",
+    "system prompt",
+    "prompt del sistema"
+  ],
+  "roleplay_starts": [
+    "act as",
+    "act\u00faa como",
+    "imagine you are",
+    "imagina que eres",
+    "pretend to be",
+    "pretende ser",
+    "you are now",
+    "ahora eres"
   ]
 }

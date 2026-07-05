@@ -2,8 +2,6 @@
 import json
 from main import detect_injection
 
-def wrap_in_json(text):
-    return json.dumps({"model": "gpt-4", "messages": [{"role": "user", "content": text}]})
 
 def evaluate():
     with open("tests/attacks.json", "r") as f:
