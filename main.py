@@ -110,18 +110,30 @@ class DeepInspectionMiddleware(BaseHTTPMiddleware):
             return JSONResponse(status_code=429, content={"error": "Too Many Requests"})
 
         # 2. Inyección de Prompts (Detección Híbrida)
+        
+        # 2. Inyección de Prompts (Detección sobre CONTENIDO)
         if request.method == "POST":
             try:
-                body = await request.body()
-                body_str = body.decode("utf-8")
+                body_bytes = await request.body()
+                body_json = json.loads(body_bytes.decode("utf-8"))
                 
-                # Buscamos la inyección en cualquier parte del cuerpo (mensajes del chat)
-                if detect_injection(body_str):
-                    log_event("CRITICAL", "prompt_injection_detected", ip=client_ip)
-                    return JSONResponse(status_code=403, content={"error": "Security Policy Violation: Prompt Injection Detected"})
-            except UnicodeDecodeError as e:
+                # Extraemos todos los contenidos de los mensajes para analizar la inyección
+                if "messages" in body_json and isinstance(body_json["messages"], list):
+                    all_content = " ".join([m.get("content", "") for m in body_json["messages"] if isinstance(m, dict)])
+                    if detect_injection(all_content):
+                        log_event("CRITICAL", "prompt_injection_detected", ip=client_ip)
+                        return JSONResponse(status_code=403, content={"error": "Security Policy Violation: Prompt Injection Detected"})
+                else:
+                    # Si no hay mensajes, analizamos el body crudo por si acaso, 
+                    # pero el ratio de caracteres especiales ya no disparará falsos positivos masivos
+                    body_str = body_bytes.decode("utf-8")
+                    if detect_injection(body_str):
+                        log_event("CRITICAL", "prompt_injection_detected", ip=client_ip)
+                        return JSONResponse(status_code=403, content={"error": "Security Policy Violation: Prompt Injection Detected"})
+            except (json.JSONDecodeError, UnicodeDecodeError) as e:
                 log_event("ERROR", "body_read_failure", error=str(e))
                 return JSONResponse(status_code=400, content={"error": "Invalid request body"})
+
 
         response = await call_next(request)
         
